@@ -1,0 +1,82 @@
+spring:
+  application:
+    name: enrollment-service
+  profiles:
+    active: dev
+    
+  # Redis配置
+  redis:
+    cluster:
+      nodes:
+        - redis-node1:6379
+        - redis-node2:6379
+        - redis-node3:6379
+    password: ${REDIS_PASSWORD:}
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 20
+        max-wait: -1ms
+        max-idle: 10
+        min-idle: 5
+
+  # Kafka配置  
+  kafka:
+    bootstrap-servers: kafka1:9092,kafka2:9092,kafka3:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+    consumer:
+      group-id: enrollment-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+
+  # 数据源配置
+  datasource:
+    master:
+      url: jdbc:mysql://mysql-master:3306/campus_enrollment?useUnicode=true&characterEncoding=utf8
+      username: ${DB_USERNAME:}
+      password: ${DB_PASSWORD:}
+    slave:
+      - url: jdbc:mysql://mysql-slave1:3306/campus_enrollment?useUnicode=true&characterEncoding=utf8
+        username: ${DB_USERNAME:}
+        password: ${DB_PASSWORD:}
+      - url: jdbc:mysql://mysql-slave2:3306/campus_enrollment?useUnicode=true&characterEncoding=utf8
+        username: ${DB_USERNAME:}
+        password: ${DB_PASSWORD:}
+
+# 服务配置
+server:
+  port: 8080
+  servlet:
+    context-path: /enrollment
+
+# 自定义配置
+campus:
+  system:
+    # 限流配置
+    rate-limit:
+      enabled: true
+      capacity: 1000
+      refill-rate: 100
+    # 缓存配置  
+    cache:
+      activity-timeout: 1800
+      user-timeout: 3600
+    # 报名配置
+    enrollment:
+      max-retry: 3
+      timeout: 30000
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
